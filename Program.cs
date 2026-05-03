@@ -12,6 +12,7 @@
         SubscribeToAnimalEvents(owl);
         SubscribeToAnimalEvents(lizard);
         //створюємо "середовища"
+        var registry = new AnimalFactoryRegistry();
         var owner = new Owner("Іван");
         var petShop = new PetShop();
         var wild = new Wild();
@@ -65,7 +66,7 @@
                     break;
 
                 case "6":
-                    CreateAnimalMenu(animals, owner, wild);
+                    CreateAnimalMenu(animals, owner, wild, registry);
                     break;
 
                 case "7":
@@ -179,51 +180,31 @@
         animal.StateChanged += (s, e) => Console.WriteLine($"[СТАН] {e.Message}");
     }
 
-    static void CreateAnimalMenu(List<Animal> animals, Owner owner, Wild wild)
+    static void CreateAnimalMenu(List<Animal> animals, Owner owner, Wild wild,
+     AnimalFactoryRegistry registry)
     {
-        Console.WriteLine("Оберіть тип тварини:");
-        Console.WriteLine("1. Собака");
-        Console.WriteLine("2. Сова");
-        Console.WriteLine("3. Ящірка");
+        Console.WriteLine("Тип тварини:");
+        foreach (var (k, f) in registry.GetAll())
+            Console.WriteLine($"  {k}. {f.AnimalType}");
 
-        var type = Console.ReadLine();
+        var factory = registry.Get(Console.ReadLine() ?? "");
+        if (factory == null) { Console.WriteLine("Невірний тип."); return; }
 
-        Console.Write("Введіть ім'я: ");
-        var name = Console.ReadLine();
+        Console.Write("Ім'я: ");
+        var name = Console.ReadLine() ?? "Безіменна";
 
-        Animal newAnimal = null;
+        Console.WriteLine("Де буде жити тварина?");
+        Console.WriteLine($"  1. {owner.Name}");
+        Console.WriteLine($"  2. {wild.Name}");
 
-        switch (type)
-        {
-            case "1":
-                newAnimal = new Dog(name);
-                break;
+        var animal = factory.Create(name);
+        SubscribeToAnimalEvents(animal);
 
-            case "2":
-                newAnimal = new Owl(name);
-                break;
+        if (Console.ReadLine() == "2") animal.Habitat = wild;
+        else owner.AddAnimal(animal);
 
-            case "3":
-                newAnimal = new Lizard(name);
-                break;
-        }
-
-        if (newAnimal != null)
-        {
-            SubscribeToAnimalEvents(newAnimal);
-
-            Console.WriteLine("Де буде жити тварина?");
-            Console.WriteLine($"1. {owner.Name}");
-            Console.WriteLine($"2. {wild.Name}");
-
-            if (Console.ReadLine() == "2")
-                newAnimal.Habitat = wild;
-            else
-                owner.AddAnimal(newAnimal);
-            animals.Add(newAnimal);
-
-            Console.WriteLine("Тварину створено!");
-        }
+        animals.Add(animal);
+        Console.WriteLine($"✓ {factory.AnimalType} «{name}» створено!");
     }
 
     static void MoveMenu(List<Animal> animals, Owner owner, PetShop petShop, Wild wild)
