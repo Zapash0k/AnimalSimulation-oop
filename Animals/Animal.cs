@@ -39,9 +39,9 @@
     protected Animal(string name)
     {
         Name = name;
-        LastFeedingTime = DateTime.Now;
-        LastCleaningTime = DateTime.Now;
-        _lastDayCheck = DateTime.Today;
+        LastFeedingTime = SimulationClock.Now;
+        LastCleaningTime = SimulationClock.Now;
+        _lastDayCheck = SimulationClock.Today;
         FeedingsToday = 0;
         InitializeBodyParts();
     }
@@ -56,7 +56,7 @@
 
             if (Habitat is Wild) return true;
 
-            return _cleanedToday && _lastCleanDay == DateTime.Today;
+            return _cleanedToday && _lastCleanDay == SimulationClock.Today;
         }
     }
 
@@ -75,7 +75,7 @@
         if (!IsAlive) return;
 
         // Перевірка нового дня
-        if (DateTime.Today > _lastDayCheck)
+        if (SimulationClock.Today > _lastDayCheck)
         {
             if (FeedingsToday < MinFeedingsPerDay)
             {
@@ -84,14 +84,14 @@
             }
 
             FeedingsToday = 0;
-            _lastDayCheck = DateTime.Today;
+            _lastDayCheck = SimulationClock.Today;
 
             // скидаємо прибирання
             _cleanedToday = false;
         }
 
         // Перевірка максимального часу без їжі
-        var hoursSinceFeeding = (DateTime.Now - LastFeedingTime).TotalHours;
+        var hoursSinceFeeding = (SimulationClock.Now - LastFeedingTime).TotalHours;
         if (hoursSinceFeeding > MaxHoursBetweenFeedings)
         {
             Die("занадто довго не їла");
@@ -120,7 +120,7 @@
         }
 
         FeedingsToday++;
-        LastFeedingTime = DateTime.Now;
+        LastFeedingTime = SimulationClock.Now;
         OnFed(new AnimalEventArgs(this, $"{Name} поїла ({FeedingsToday}/{MaxFeedingsPerDay} за сьогодні)"));
         return true;
     }
@@ -133,10 +133,10 @@
             return;
         }
 
-        LastCleaningTime = DateTime.Now;
+        LastCleaningTime = SimulationClock.Now;
 
         _cleanedToday = true;
-        _lastCleanDay = DateTime.Today;
+        _lastCleanDay = SimulationClock.Today;
 
         OnCleaned(new AnimalEventArgs(this, $"За {Name} прибрано"));
     }
@@ -155,6 +155,9 @@
     protected virtual void OnActionPerformed(AnimalEventArgs e) => ActionPerformed?.Invoke(this, e);
 
     public IReadOnlyList<BodyPart> GetBodyParts() => BodyParts.AsReadOnly();
+    public int GetLimbCount() =>
+    BodyParts.OfType<Legs>().Sum(l => l.Count) +
+    BodyParts.OfType<Wings>().Sum(w => w.Count);
 
     protected void RaiseActionPerformed(string message) =>
         OnActionPerformed(new AnimalEventArgs(this, message));

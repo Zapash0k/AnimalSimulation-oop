@@ -14,12 +14,17 @@
         //створюємо "середовища"
         var owner = new Owner("Іван");
         var petShop = new PetShop();
+        var wild = new Wild();
         //призначаємо власників
         owner.AddAnimal(dog);
         owner.AddAnimal(owl);
         petShop.AddAnimal(lizard);
         //список об'єктів тварин
-        var animals = new List<Animal> { dog, owl, lizard };
+        var wildOwl = new Owl("Дикун");
+        wildOwl.Habitat = wild;
+
+        var animals = new List<Animal> { dog, owl, lizard, wildOwl};
+        foreach (var a in animals) SubscribeToAnimalEvents(a);
 
         while (true)
         {
@@ -30,6 +35,9 @@
             Console.WriteLine("4. Виконати дію (рух)");
             Console.WriteLine("5. Перевірити стан");
             Console.WriteLine("6. Завести нову тварину");
+            Console.WriteLine("7. Перемістити тварину");
+            Console.WriteLine("8. Кількість кінцівок");
+            Console.WriteLine("9. Перемотати час вперед");
             Console.WriteLine("0. Вийти");
 
             var choice = Console.ReadLine();
@@ -57,7 +65,17 @@
                     break;
 
                 case "6":
-                    CreateAnimalMenu(animals, owner);
+                    CreateAnimalMenu(animals, owner, wild);
+                    break;
+
+                case "7":
+                    MoveMenu(animals, owner, petShop, wild);
+                    break;
+                case "8":
+                    LimbsMenu(animals);
+                    break;
+                case "9":
+                    AdvanceTimeMenu();
                     break;
 
                 case "0":
@@ -160,7 +178,7 @@
         animal.ActionPerformed += (s, e) => Console.WriteLine($"[ДІЯ] {e.Message}");
     }
 
-    static void CreateAnimalMenu(List<Animal> animals, Owner owner)
+    static void CreateAnimalMenu(List<Animal> animals, Owner owner, Wild wild)
     {
         Console.WriteLine("Оберіть тип тварини:");
         Console.WriteLine("1. Собака");
@@ -193,10 +211,68 @@
         {
             SubscribeToAnimalEvents(newAnimal);
 
-            owner.AddAnimal(newAnimal);
+            Console.WriteLine("Де буде жити тварина?");
+            Console.WriteLine($"1. {owner.Name}");
+            Console.WriteLine($"2. {wild.Name}");
+
+            if (Console.ReadLine() == "2")
+                newAnimal.Habitat = wild;
+            else
+                owner.AddAnimal(newAnimal);
             animals.Add(newAnimal);
 
             Console.WriteLine("Тварину створено!");
+        }
+    }
+
+    static void MoveMenu(List<Animal> animals, Owner owner, PetShop petShop, Wild wild)
+    {
+        Console.WriteLine("Тварину для переміщення:");
+        var a = SelectAnimal(animals);
+
+        Console.WriteLine($"1. {owner.Name}");
+        Console.WriteLine($"2. {petShop.Name}");
+        Console.WriteLine($"3. {wild.Name}");
+
+        IHabitat dest = Console.ReadLine() switch
+        {
+            "1" => owner,
+            "2" => petShop,
+            "3" => wild,
+            _ => null
+        };
+        if (dest == null) { Console.WriteLine("Невірний вибір."); return; }
+
+        if (a.Habitat is Owner co) co.RemoveAnimal(a);
+        else if (a.Habitat is PetShop cp) cp.RemoveAnimal(a);
+
+        if (dest is Owner no) no.AddAnimal(a);
+        else if (dest is PetShop np) np.AddAnimal(a);
+        else a.Habitat = wild;
+
+        Console.WriteLine($"{a.Name} переміщено до «{dest.Name}».");
+    }
+
+    static void LimbsMenu(List<Animal> animals)
+    {
+        Console.WriteLine("Тварину:");
+        var a = SelectAnimal(animals);
+
+        foreach (var bp in a.GetBodyParts().Where(p => p is Legs or Wings))
+        {
+            int cnt = bp switch { Legs l => l.Count, Wings w => w.Count, _ => 0 };
+            Console.WriteLine($"  {bp.Name}: {cnt}");
+        }
+        Console.WriteLine($"  Разом кінцівок: {a.GetLimbCount()}");
+    }
+
+    static void AdvanceTimeMenu()
+    {
+        Console.Write("На скільки годин перемотати? ");
+        if (double.TryParse(Console.ReadLine(), out double h))
+        {
+            SimulationClock.AdvanceTime(TimeSpan.FromHours(h));
+            Console.WriteLine($"Час: {SimulationClock.Now:HH:mm dd.MM.yyyy}");
         }
     }
 }
