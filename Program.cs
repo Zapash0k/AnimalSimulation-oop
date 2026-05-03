@@ -176,6 +176,7 @@
         animal.Cleaned += (s, e) => Console.WriteLine($"[ПОДІЯ] {e.Message}");
         animal.HabitatChanged += (s, e) => Console.WriteLine($"[ПОДІЯ] {e.Message}");
         animal.ActionPerformed += (s, e) => Console.WriteLine($"[ДІЯ] {e.Message}");
+        animal.StateChanged += (s, e) => Console.WriteLine($"[СТАН] {e.Message}");
     }
 
     static void CreateAnimalMenu(List<Animal> animals, Owner owner, Wild wild)

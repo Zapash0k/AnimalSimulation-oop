@@ -16,7 +16,7 @@
             return false;
         }
 
-        if (!CanPerformIntenseActivity)
+        if (!CurrentState.CanRun)
         {
             RaiseActionPerformed($"{Name} занадто голодна щоб бігати");
             return false;

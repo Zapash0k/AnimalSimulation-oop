@@ -17,7 +17,7 @@
             return false;
         }
 
-        if (!CanPerformIntenseActivity)
+        if (!CurrentState.CanFly)
         {
             RaiseActionPerformed($"{Name} занадто голодна щоб літати");
             return false;

@@ -15,7 +15,11 @@
             RaiseActionPerformed($"{Name} мертва і не може повзати");
             return false;
         }
-
+        if (!CurrentState.CanCrawl)
+        {
+            RaiseActionPerformed($"{Name} не може повзати");
+            return false;
+        }
         RaiseActionPerformed($"{Name} повзає");
         return true;
     }

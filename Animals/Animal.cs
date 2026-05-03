@@ -10,6 +10,7 @@
     public DateTime LastFeedingTime { get; private set; }
     public DateTime LastCleaningTime { get; private set; }
     public int FeedingsToday { get; private set; }
+    public IAnimalState CurrentState { get; private set; } = HealthyState.Instance;
 
     private DateTime _lastDayCheck;
     private IHabitat _habitat;
@@ -35,6 +36,7 @@
     public event EventHandler<AnimalEventArgs> Cleaned;
     public event EventHandler<AnimalEventArgs> HabitatChanged;
     public event EventHandler<AnimalEventArgs> ActionPerformed;
+    public event EventHandler<AnimalEventArgs> StateChanged;
 
     protected Animal(string name)
     {
@@ -60,14 +62,17 @@
         }
     }
 
-    protected bool CanPerformIntenseActivity
+    private void UpdateState()
     {
-        get
-        {
-            if (!IsAlive) return false;
-            var hoursSinceFeeding = (DateTime.Now - LastFeedingTime).TotalHours;
-            return hoursSinceFeeding <= HoursWithoutFoodForWeakness;
-        }
+        IAnimalState next = !IsAlive
+            ? DeadState.Instance
+            : (SimulationClock.Now - LastFeedingTime).TotalHours > 8
+                ? HungryState.Instance
+                : HealthyState.Instance;
+
+        if (next == CurrentState) return;
+        CurrentState = next;
+        OnStateChanged(new AnimalEventArgs(this, $"{Name}: стан → «{next.Description}»"));
     }
 
     public void CheckVitalStatus()
@@ -103,6 +108,8 @@
         {
             OnBecameHungry(new AnimalEventArgs(this, $"{Name} голодна і ослаблена"));
         }
+
+        UpdateState();
     }
 
     public virtual bool Eat()
@@ -122,6 +129,7 @@
         FeedingsToday++;
         LastFeedingTime = SimulationClock.Now;
         OnFed(new AnimalEventArgs(this, $"{Name} поїла ({FeedingsToday}/{MaxFeedingsPerDay} за сьогодні)"));
+        UpdateState();
         return true;
     }
 
@@ -153,6 +161,7 @@
     protected virtual void OnCleaned(AnimalEventArgs e) => Cleaned?.Invoke(this, e);
     protected virtual void OnHabitatChanged(AnimalEventArgs e) => HabitatChanged?.Invoke(this, e);
     protected virtual void OnActionPerformed(AnimalEventArgs e) => ActionPerformed?.Invoke(this, e);
+    protected virtual void OnStateChanged(AnimalEventArgs e) => StateChanged?.Invoke(this, e);
 
     public IReadOnlyList<BodyPart> GetBodyParts() => BodyParts.AsReadOnly();
     public int GetLimbCount() =>
