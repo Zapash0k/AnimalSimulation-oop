@@ -8,9 +8,9 @@
         var owl = new Owl("Совунья");
         var lizard = new Lizard("Гоша");
         //підписуємося на них
-        SubscribeToAnimalEvents(dog);
-        SubscribeToAnimalEvents(owl);
-        SubscribeToAnimalEvents(lizard);
+        //SubscribeToAnimalEvents(dog);
+        //SubscribeToAnimalEvents(owl);
+        //SubscribeToAnimalEvents(lizard);
         //створюємо "середовища"
         var registry = new AnimalFactoryRegistry();
         var owner = new Owner("Іван");
